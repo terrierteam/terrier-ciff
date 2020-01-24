@@ -10,7 +10,7 @@ This ingests files written in the Common IndeXing Format.
     mvn install
 ```
 
-## Usage
+## Usage
 
 The Terier-CIXF package provides a tool for ingesting files written in the Common IndeXing Format. It can be used directly from the Terrier commandline.
 
