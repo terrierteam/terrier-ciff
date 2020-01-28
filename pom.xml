@@ -11,14 +11,16 @@
 		<maven.compiler.source>8</maven.compiler.source>
 		<maven.compiler.target>8</maven.compiler.target>
 		<terrier.version>5.2</terrier.version>
+		<protobuf.version>3.11.1</protobuf.version>
 	</properties>
-
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.25</version>
 		</dependency>
+
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
@@ -26,9 +28,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.google.protobuf</groupId>
-			<artifactId>protobuf-java</artifactId>
-			<version>3.8.0</version>
+			<groupId>com.github.os72</groupId>
+			<artifactId>protobuf-java-util-shaded-3-11-1</artifactId>
+			<version>0.9</version>
 		</dependency>
 
 		<dependency>
@@ -90,51 +92,30 @@
 			</testResource>
 		</testResources>
 
-		<extensions>
-			<extension>
-				<groupId>kr.motd.maven</groupId>
-				<artifactId>os-maven-plugin</artifactId>
-				<version>1.6.1</version>
-			</extension>
-		</extensions>
-
-
-
 		<plugins>
-			<plugin>
-				<groupId>kr.motd.maven</groupId>
-				<artifactId>os-maven-plugin</artifactId>
-				<version>1.6.1</version>
-				<executions>
-					<execution>
-						<phase>initialize</phase>
-						<goals>
-							<goal>detect</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
 
 			<!-- JUnit 5 requires Surefire version 2.22.0 or higher -->
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.22.1</version>
 			</plugin>
-
+			
 			<plugin>
-				<groupId>org.xolstice.maven.plugins</groupId>
-				<artifactId>protobuf-maven-plugin</artifactId>
-				<version>0.6.1</version>
-				<configuration>
-					<protocArtifact>com.google.protobuf:protoc:3.7.1:exe:${os.detected.classifier}</protocArtifact>
-					<!-- <protocExecutable>/usr/local/bin/protoc</protocExecutable> -->
-				</configuration>
+				<groupId>com.github.os72</groupId>
+				<artifactId>protoc-jar-maven-plugin</artifactId>
+				<version>${protobuf.version}</version>
 				<executions>
 					<execution>
+						<phase>generate-sources</phase>
 						<goals>
-							<goal>compile</goal>
-							<goal>test-compile</goal>
+							<goal>run</goal>
 						</goals>
+						<configuration>
+							<type>java-shaded</type>
+							<inputDirectories>
+								<include>src/main/protobuf</include>
+							</inputDirectories>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
