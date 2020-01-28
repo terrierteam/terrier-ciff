@@ -40,8 +40,9 @@ public class CixfIndexIngest {
         @Override
         public int run(CommandLine line) throws Exception {
             String[] args = line.getArgs();
-            if (args.length != 3) {
+            if (args.length != 3 && args.length != 2) {
                 System.err.println("Usage: " + this.commandname() + " postingsFile doclenFile docnoFile");
+                System.err.println("Usage: " + this.commandname() + " postingsFile doclen_and_docnoFile");
                 return -1;
             }
             CixfIndexIngest.main(args);
@@ -72,14 +73,12 @@ public class CixfIndexIngest {
     public static void main(final String[] args) throws Exception {
         final String postingsFile = args[0];
         final String doclenFile = args[1];
-        final String docnoFile = args[2];
+        final String docnoFile = args.length > 2 ? args[2] : null;
 
         final InputStream is = Files.openFileStream(postingsFile);
 
         final IndexOnDisk index = Index.createNewIndex(ApplicationSetup.TERRIER_INDEX_PATH, ApplicationSetup.TERRIER_INDEX_PREFIX);
-        final MetaIndexBuilder mib = createMetaIndexBuilder(index);
-        final DocumentIndexBuilder dib = new DocumentIndexBuilder(index, "document");
-
+        
         index.setIndexProperty("max.term.length", "20");
 
         int numFields = 0;
@@ -119,28 +118,76 @@ public class CixfIndexIngest {
         FSOMapFileLexiconUtilities.optimise("lexicon", index, css);
         css.close();
 
-        BufferedReader br = Files.openFileReader(doclenFile);
+        long tokens = 0;
+        if (docnoFile != null)
+        {
+            tokens = readDoclenFile(doclenFile, index);
+            readDocnoFile(docnoFile, index);
+        }
+        else
+        {
+            tokens = readCombinedFile(doclenFile, index);
+        }
+        index.setIndexProperty("num.Tokens", ""+tokens);
+        index.flush();
+        index.close();
+    }
+
+    protected static long readDoclenFile(String inputfile, IndexOnDisk index) throws Exception {
+        final DocumentIndexBuilder dib = new DocumentIndexBuilder(index, "document");
+        BufferedReader br = Files.openFileReader(inputfile);
         String line = null;
         final DocumentIndexEntry die = new SimpleDocumentIndexEntry();
         index.addIndexStructure("document-factory", SimpleDocumentIndexEntry.Factory.class.getName(), "", "");
+        long numtokens = 0;
         while ((line = br.readLine()) != null) {
             final int doclength = Integer.parseInt(line.split("\t", 2)[1]);
             die.setDocumentLength(doclength);
             dib.addEntryToBuffer(die);
+            numtokens += doclength;
         }
         dib.finishedCollections();
         dib.close();
         br.close();
+        return numtokens;
+    }
 
-        br = Files.openFileReader(docnoFile);
+    protected static void readDocnoFile(String inputfile, IndexOnDisk index) throws Exception {
+
+        String line = null;
+        final MetaIndexBuilder mib = createMetaIndexBuilder(index);
+        BufferedReader br = Files.openFileReader(inputfile);
         while( (line = br.readLine()) != null ) {
             line = line.trim();
             mib.writeDocumentEntry(new String[]{line});
         }
         mib.close();
         index.flush();
-        index.close();
+    }
 
+    protected static long readCombinedFile(String inputfile, IndexOnDisk index) throws Exception {
+        final MetaIndexBuilder mib = createMetaIndexBuilder(index);
+        final DocumentIndexBuilder dib = new DocumentIndexBuilder(index, "document");
+
+        BufferedReader br = Files.openFileReader(inputfile);
+        String line = null;
+        final DocumentIndexEntry die = new SimpleDocumentIndexEntry();
+        long numtokens = 0;
+        index.addIndexStructure("document-factory", SimpleDocumentIndexEntry.Factory.class.getName(), "", "");
+        while ((line = br.readLine()) != null) {
+            String[] parts = line.split("\t", 3);
+            final String docno = parts[1];
+            final int doclength = Integer.parseInt(parts[2]);
+            die.setDocumentLength(doclength);
+            dib.addEntryToBuffer(die);
+            mib.writeDocumentEntry(new String[]{docno});
+            numtokens += doclength;
+        }
+        dib.finishedCollections();
+        dib.close();
+        mib.close();
+        index.flush();
+        return numtokens;
     }
 
     protected static MetaIndexBuilder createMetaIndexBuilder(final IndexOnDisk currentIndex)
