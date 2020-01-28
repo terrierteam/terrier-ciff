@@ -1,9 +1,9 @@
 
-
 package org.terrier.cixf;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
+import java.util.Iterator;
 
 import org.apache.commons.cli.CommandLine;
 import org.terrier.applications.CLITool;
@@ -68,8 +68,6 @@ public class CixfIndexIngest {
 
     protected String basicInvertedIndexPostingIteratorClass = BasicIterablePosting.class.getName();
 
-
-
     public static void main(final String[] args) throws Exception {
         final String postingsFile = args[0];
         final String doclenFile = args[1];
@@ -77,8 +75,9 @@ public class CixfIndexIngest {
 
         final InputStream is = Files.openFileStream(postingsFile);
 
-        final IndexOnDisk index = Index.createNewIndex(ApplicationSetup.TERRIER_INDEX_PATH, ApplicationSetup.TERRIER_INDEX_PREFIX);
-        
+        final IndexOnDisk index = Index.createNewIndex(ApplicationSetup.TERRIER_INDEX_PATH,
+                ApplicationSetup.TERRIER_INDEX_PREFIX);
+
         index.setIndexProperty("max.term.length", "20");
 
         int numFields = 0;
@@ -92,7 +91,7 @@ public class CixfIndexIngest {
                 + index.getPrefix() + "." + "inverted" + invertedCompression.getStructureFileExtension());
 
         CommonIndexFormat.PostingsList pl = null;
-        int termid=0;
+        int termid = 0;
         while ((pl = CommonIndexFormat.PostingsList.parseDelimitedFrom(is)) != null) {
 
             final LexiconEntry lee = lexEntryF.newInstance();
@@ -103,9 +102,24 @@ public class CixfIndexIngest {
             // we perform two passes on the posting list, one to get maxtf
             lee.setMaxFrequencyInDocuments(pl.getPostingList().stream().map(p -> p.getTf()).reduce(Integer::max).get());
 
-            final BitIndexPointer pointer = 
-                pos.writePostings(pl.getPostingList().stream()
-                    .map(p -> (Posting) new BasicPostingImpl(p.getDocid(), p.getTf())).iterator(), -1);
+            Iterator<CommonIndexFormat.Posting> iterIn = pl.getPostingList().iterator();
+            Iterator<Posting> iterOut = new Iterator<Posting>() {
+
+                int prev = 0;
+                @Override
+                public boolean hasNext() {
+                    return iterIn.hasNext();
+                }
+
+                @Override
+                public Posting next() {
+                    CommonIndexFormat.Posting pIn = iterIn.next();
+                    prev += pIn.getDocid();
+                    return new BasicPostingImpl(prev, pIn.getTf());
+                }
+
+            };
+            final BitIndexPointer pointer = pos.writePostings(iterOut, -1);
             lee.setPointer(pointer);
 
             lexStream.writeNextEntry(pl.getTerm(), lee);
