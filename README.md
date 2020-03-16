@@ -27,6 +27,8 @@ We provide variants of BM25 that are aligned with those in the Anserini platform
  - `BM25_log10` - This follows Terrier's standard implementation, but uses log base 10 instead of log base 2.
  - `BM25_log10_nonum` - This removes the unnecessary (k+1) from the BM25 numerator. It alsos uses log base 10.
 
+ For more discussion, see [1] and [2].
+
 ## Implementation Notes
 
  - collection statistics (number of tokens/average document length) are calculated using the document lengths file; we do not consider the collection statistics in the header.
