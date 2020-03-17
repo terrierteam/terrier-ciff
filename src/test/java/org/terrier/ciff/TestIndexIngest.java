@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-//import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 import java.io.File;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +60,7 @@ public class TestIndexIngest extends ApplicationSetupBasedTest
         assertEquals(14, index.getCollectionStatistics().getNumberOfPointers());
         assertEquals(16, index.getCollectionStatistics().getNumberOfTokens());
         assertEquals(9, index.getCollectionStatistics().getNumberOfUniqueTerms());
+        assertEquals(5.33, index.getCollectionStatistics().getAverageDocumentLength(), 0.01);
 
         assertEquals(3, index.getCollectionStatistics().getNumberOfDocuments());
         assertEquals("WSJ_1", index.getMetaIndex().getItem("docno", 0));
