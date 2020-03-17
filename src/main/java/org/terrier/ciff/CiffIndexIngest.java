@@ -29,6 +29,7 @@ import org.terrier.structures.postings.Posting;
 import org.terrier.structures.postings.bit.BasicIterablePosting;
 import org.terrier.utility.ApplicationSetup;
 import org.terrier.utility.Files;
+import org.terrier.utility.TerrierTimer;
 
 import io.osirrc.ciff.CommonIndexFileFormat;
 
@@ -39,7 +40,7 @@ public class CiffIndexIngest {
         @Override
         public int run(CommandLine line) throws Exception {
             String[] args = line.getArgs();
-            if (args.length != 3 && args.length != 2) {
+            if (args.length !=1 ) {
                 System.err.println("Usage: " + this.commandname() + " /path/to/ciff.gz");
                 return -1;
             }
@@ -88,38 +89,46 @@ public class CiffIndexIngest {
         final AbstractPostingOutputStream pos = invertedCompression.getPostingOutputStream(index.getPath() + "/"
                 + index.getPrefix() + "." + "inverted" + invertedCompression.getStructureFileExtension());
 
-        for(int termid=0; termid < header.getNumPostingsLists();termid++)
-        {
-            CommonIndexFileFormat.PostingsList pl = CommonIndexFileFormat.PostingsList.parseDelimitedFrom(fileIn);
-            final LexiconEntry lee = lexEntryF.newInstance();
-            lee.setDocumentFrequency((int) pl.getDf());
-            lee.setFrequency((int) pl.getCf());
-            lee.setTermId(termid);
 
-            // we perform two passes on the posting list, one to get maxtf
-            lee.setMaxFrequencyInDocuments(pl.getPostingsList().stream().map(p -> p.getTf()).reduce(Integer::max).get());
+        TerrierTimer tt = new TerrierTimer("Constructing inverted posting list", header.getNumPostingsLists());
+        try{
+            tt.start();
+            for(int termid=0; termid < header.getNumPostingsLists();termid++)
+            {
+                CommonIndexFileFormat.PostingsList pl = CommonIndexFileFormat.PostingsList.parseDelimitedFrom(fileIn);
+                final LexiconEntry lee = lexEntryF.newInstance();
+                lee.setDocumentFrequency((int) pl.getDf());
+                lee.setFrequency((int) pl.getCf());
+                lee.setTermId(termid);
 
-            Iterator<Posting> iterOut = new Iterator<Posting>() {
-                int offset = -1;
-                int prev = 0;
-                @Override
-                public boolean hasNext() {
-                    return pl.getPostingsCount() > 0 && offset < pl.getPostingsCount() -1;
-                }
+                // we perform two passes on the posting list, one to get maxtf
+                lee.setMaxFrequencyInDocuments(pl.getPostingsList().stream().map(p -> p.getTf()).reduce(Integer::max).get());
 
-                @Override
-                public Posting next() {
-                    offset++;
-                    CommonIndexFileFormat.Posting pIn = pl.getPostings(offset);
-                    prev += pIn.getDocid(); //the docids in the postings lists are d-gapped
-                    return new BasicPostingImpl(prev, pIn.getTf());
-                }
+                Iterator<Posting> iterOut = new Iterator<Posting>() {
+                    int offset = -1;
+                    int prev = 0;
+                    @Override
+                    public boolean hasNext() {
+                        return pl.getPostingsCount() > 0 && offset < pl.getPostingsCount() -1;
+                    }
 
-            };
-            final BitIndexPointer pointer = pos.writePostings(iterOut, -1);
-            lee.setPointer(pointer);
+                    @Override
+                    public Posting next() {
+                        offset++;
+                        CommonIndexFileFormat.Posting pIn = pl.getPostings(offset);
+                        prev += pIn.getDocid(); //the docids in the postings lists are d-gapped
+                        return new BasicPostingImpl(prev, pIn.getTf());
+                    }
 
-            lexStream.writeNextEntry(pl.getTerm(), lee);
+                };
+                final BitIndexPointer pointer = pos.writePostings(iterOut, -1);
+                lee.setPointer(pointer);
+
+                lexStream.writeNextEntry(pl.getTerm(), lee);
+                tt.increment();
+            }
+        } finally {
+            tt.finished();
         }
         pos.close();
         invertedCompression.writeIndexProperties(index, "lexicon-entry-inputstream");
@@ -128,8 +137,16 @@ public class CiffIndexIngest {
         FSOMapFileLexiconUtilities.optimise("lexicon", index, css);
         css.close();
 
-        readCombinedDocumentFile(fileIn, header.getNumDocs(), index);
+        readCombinedDocumentFile(fileIn, header.getNumDocs(), index);   
+        index.setIndexProperty("num.Documents", String.valueOf(header.getTotalDocs()));
+        index.setIndexProperty("num.Terms", String.valueOf(header.getTotalPostingsLists()));
+        index.setIndexProperty("num.Tokens", String.valueOf(header.getTotalTermsInCollection()));
+        
+        fileIn.close();
+
         index.flush();
+        System.out.println("Finished ingesting "+ciffFile+" ("+index.getCollectionStatistics().getNumberOfDocuments()+ " documents)");
+        System.out.println("New index at " + index.getIndexRef().toString());
         index.close();
     }
 
@@ -142,15 +159,24 @@ public class CiffIndexIngest {
         final DocumentIndexEntry die = new SimpleDocumentIndexEntry();
         long numtokens = 0;
         index.addIndexStructure("document-factory", SimpleDocumentIndexEntry.Factory.class.getName(), "", "");
-        for (int i=0; i<numDocs; i++) {
-            CommonIndexFileFormat.DocRecord docRecord = CommonIndexFileFormat.DocRecord.parseDelimitedFrom(fileIn);
-            final String docno = docRecord.getCollectionDocid();
-            final int doclength = docRecord.getDoclength();
-            die.setDocumentLength(doclength);
-            dib.addEntryToBuffer(die);
-            mib.writeDocumentEntry(new String[]{docno});
-            numtokens += doclength;
+
+        TerrierTimer tt = new TerrierTimer("Constructing document metadata", numDocs);
+        try{
+            tt.start();
+            for (int i=0; i<numDocs; i++) {
+                CommonIndexFileFormat.DocRecord docRecord = CommonIndexFileFormat.DocRecord.parseDelimitedFrom(fileIn);
+                final String docno = docRecord.getCollectionDocid();
+                final int doclength = docRecord.getDoclength();
+                die.setDocumentLength(doclength);
+                dib.addEntryToBuffer(die);
+                mib.writeDocumentEntry(new String[]{docno});
+                numtokens += doclength;
+                tt.increment();
+            }
+        } finally {
+            tt.finished();
         }
+
         index.setIndexProperty("num.Tokens", ""+numtokens);
         dib.finishedCollections();
         dib.close();
