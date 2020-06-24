@@ -1,14 +1,9 @@
+[![](https://jitpack.io/v/terrierteam/terrier-ciff.svg)](https://jitpack.io/#terrierteam/terrier-ciff)
+
 # Terrier-CIFF
 
 This allows the [Terrier.org information retrieval platform](http://terrier.org) to ingest files written in the [Common Index File Format](https://github.com/osirrc/ciff/) - see [1]. In doing so, a new Terrier index is written.
 
-## Installation
-
-```shell
-    git clone <repo>
-    cd terrier-ciff
-    mvn install
-```
 
 ## Usage
 
@@ -16,7 +11,7 @@ The Terier-CIFF package provides a tool for ingesting files written in the Commo
 
 ```shell
     cd /path/to/terrier
-    bin/terrier  -Dterrier.mvn.coords=org.terrier:terrier-ciff:0.2 ciff-ingest /path/to/ciff.gz
+    bin/terrier  -P com.github.terrierteam:terrier-ciff:0.2 ciff-ingest /path/to/ciff.gz
 ```
 
 This creates a new index at the default location. The standard `-I` option can be used to change the location of the generated index.
