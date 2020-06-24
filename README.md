@@ -7,7 +7,7 @@ This allows the [Terrier.org information retrieval platform](http://terrier.org)
 
 ## Usage
 
-The Terier-CIFF package provides a tool for ingesting files written in the Common Index File Format. It can be used directly from the Terrier commandline (version 5.2 minimum).
+The Terier-CIFF package provides a tool for ingesting files written in the Common Index File Format. It can be used directly from the Terrier commandline (version 5.3 minimum).
 
 ```shell
     cd /path/to/terrier
