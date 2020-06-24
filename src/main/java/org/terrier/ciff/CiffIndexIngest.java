@@ -94,18 +94,20 @@ public class CiffIndexIngest {
         TerrierTimer tt = new TerrierTimer("Constructing inverted posting list", header.getNumPostingsLists());
         try{
             tt.start();
+            int skipped = 0;
             for(int termid=0; termid < header.getNumPostingsLists();termid++)
             {
                 CommonIndexFileFormat.PostingsList pl = CommonIndexFileFormat.PostingsList.parseDelimitedFrom(fileIn);
-		if (pl.getTerm().length() > MAX_TERM_LENGTH) {
+                if (pl.getTerm().length() > MAX_TERM_LENGTH) {
                     System.err.println("skipping term with excessive length: " + pl.getTerm());
                     tt.increment();
+                    skipped++;
                     continue;
-		}
+                }
                 final LexiconEntry lee = lexEntryF.newInstance();
                 lee.setDocumentFrequency((int) pl.getDf());
                 lee.setFrequency((int) pl.getCf());
-                lee.setTermId(termid);
+                lee.setTermId(termid-skipped);
 
                 // we perform two passes on the posting list, one to get maxtf
                 lee.setMaxFrequencyInDocuments(pl.getPostingsList().stream().map(p -> p.getTf()).reduce(Integer::max).get());
