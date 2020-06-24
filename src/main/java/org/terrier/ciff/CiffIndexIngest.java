@@ -66,6 +66,7 @@ public class CiffIndexIngest {
     }
 
     protected String basicInvertedIndexPostingIteratorClass = BasicIterablePosting.class.getName();
+    public static int MAX_TERM_LENGTH = 20;
 
     public static void main(final String[] args) throws Exception {
         final String ciffFile = args[0];
@@ -77,7 +78,7 @@ public class CiffIndexIngest {
 
         CommonIndexFileFormat.Header header = CommonIndexFileFormat.Header.parseDelimitedFrom(fileIn);
         
-        index.setIndexProperty("max.term.length", "20");
+        index.setIndexProperty("max.term.length", String.valueOf(MAX_TERM_LENGTH));
 
         int numFields = 0;
         final LexiconOutputStream<String> lexStream = new FSOMapFileLexiconOutputStream(index, "lexicon",
@@ -96,6 +97,11 @@ public class CiffIndexIngest {
             for(int termid=0; termid < header.getNumPostingsLists();termid++)
             {
                 CommonIndexFileFormat.PostingsList pl = CommonIndexFileFormat.PostingsList.parseDelimitedFrom(fileIn);
+		if (pl.getTerm().length > MAX_TERM_LENGTH) {
+                    System.err.println("skipping term with excessive length: " + pl.getTerm());
+                    tt.increment();
+                    continue;
+		}
                 final LexiconEntry lee = lexEntryF.newInstance();
                 lee.setDocumentFrequency((int) pl.getDf());
                 lee.setFrequency((int) pl.getCf());
@@ -154,7 +160,7 @@ public class CiffIndexIngest {
 
     protected static void readCombinedDocumentFile(InputStream fileIn, int numDocs, IndexOnDisk index) throws Exception {
         final MetaIndexBuilder mib = createMetaIndexBuilder(index);
-        final DocumentIndexBuilder dib = new DocumentIndexBuilder(index, "document");
+        final DocumentIndexBuilder dib = new DocumentIndexBuilder(index, "document", false);
 
         final DocumentIndexEntry die = new SimpleDocumentIndexEntry();
         long numtokens = 0;
