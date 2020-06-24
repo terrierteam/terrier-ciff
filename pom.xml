@@ -8,9 +8,9 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>8</maven.compiler.source>
-		<maven.compiler.target>8</maven.compiler.target>
-		<terrier.version>5.2</terrier.version>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+		<terrier.version>5.3</terrier.version>
 		<protobuf.version>3.11.1</protobuf.version>
 	</properties>
 	
