@@ -97,7 +97,7 @@ public class CiffIndexIngest {
             for(int termid=0; termid < header.getNumPostingsLists();termid++)
             {
                 CommonIndexFileFormat.PostingsList pl = CommonIndexFileFormat.PostingsList.parseDelimitedFrom(fileIn);
-		if (pl.getTerm().length > MAX_TERM_LENGTH) {
+		if (pl.getTerm().length() > MAX_TERM_LENGTH) {
                     System.err.println("skipping term with excessive length: " + pl.getTerm());
                     tt.increment();
                     continue;
