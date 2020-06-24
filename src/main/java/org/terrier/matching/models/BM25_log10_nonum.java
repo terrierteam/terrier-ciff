@@ -109,10 +109,10 @@ public class BM25_log10_nonum extends WeightingModel {
 	@Override
 	public void prepare() {
 		super.prepare();
-		System.err.println("numberOfDocuments="+numberOfDocuments);
-		System.err.println("averageDocumentLength="+averageDocumentLength);
-		System.err.println("documentFrequency="+documentFrequency);
-		System.err.println("b="+b);
+		// System.err.println("numberOfDocuments="+numberOfDocuments);
+		// System.err.println("averageDocumentLength="+averageDocumentLength);
+		// System.err.println("documentFrequency="+documentFrequency);
+		// System.err.println("b="+b);
 	}
 	
 }
