@@ -72,7 +72,7 @@ public class CiffIndexIngest {
         
         final InputStream fileIn = Files.openFileStream(ciffFile);
 
-        final IndexOnDisk index = Index.createNewIndex(ApplicationSetup.TERRIER_INDEX_PATH,
+        final IndexOnDisk index = IndexOnDisk.createNewIndex(ApplicationSetup.TERRIER_INDEX_PATH,
                 ApplicationSetup.TERRIER_INDEX_PREFIX);
 
         CommonIndexFileFormat.Header header = CommonIndexFileFormat.Header.parseDelimitedFrom(fileIn);
