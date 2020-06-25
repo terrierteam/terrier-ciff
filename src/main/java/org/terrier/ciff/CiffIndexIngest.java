@@ -90,16 +90,16 @@ public class CiffIndexIngest {
         final AbstractPostingOutputStream pos = invertedCompression.getPostingOutputStream(index.getPath() + "/"
                 + index.getPrefix() + "." + "inverted" + invertedCompression.getStructureFileExtension());
 
-
+        int skipped = 0;
         TerrierTimer tt = new TerrierTimer("Constructing inverted posting list", header.getNumPostingsLists());
         try{
             tt.start();
-            int skipped = 0;
+            i
             for(int termid=0; termid < header.getNumPostingsLists();termid++)
             {
                 CommonIndexFileFormat.PostingsList pl = CommonIndexFileFormat.PostingsList.parseDelimitedFrom(fileIn);
                 if (pl.getTerm().length() > MAX_TERM_LENGTH) {
-                    System.err.println("skipping term with excessive length: " + pl.getTerm());
+                    //System.err.println("skipping term with excessive length: " + pl.getTerm());
                     tt.increment();
                     skipped++;
                     continue;
@@ -137,6 +137,10 @@ public class CiffIndexIngest {
             }
         } finally {
             tt.finished();
+        }
+        if (skipped > 0)
+        {
+            System.err.println("Skipped "+skipped+" terms length exceeding " + MAX_TERM_LENGTH + " characters");
         }
         pos.close();
         invertedCompression.writeIndexProperties(index, "lexicon-entry-inputstream");
