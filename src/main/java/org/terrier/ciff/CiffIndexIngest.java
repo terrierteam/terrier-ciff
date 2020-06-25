@@ -94,7 +94,6 @@ public class CiffIndexIngest {
         TerrierTimer tt = new TerrierTimer("Constructing inverted posting list", header.getNumPostingsLists());
         try{
             tt.start();
-            i
             for(int termid=0; termid < header.getNumPostingsLists();termid++)
             {
                 CommonIndexFileFormat.PostingsList pl = CommonIndexFileFormat.PostingsList.parseDelimitedFrom(fileIn);
