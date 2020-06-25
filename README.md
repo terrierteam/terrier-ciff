@@ -35,6 +35,6 @@ Craig Macdonald, University of Glasgow
 
 ## References
 
-[1] Under review.
+[1] Jimmy Lin, Joel Mackenzie, Chris Kamphuis, Craig Macdonald, Antonio Mallia, Michał Siedlaczek, Andrew Trotman, Arjen de Vries. Supporting Interoperability Between Open-Source Search Engines with the Common Index File Format. In Proceedings of SIGIR 2020. [arXiv:2003.08276](https://arxiv.org/abs/2003.08276).
 
 [2] Which BM25 Do You Mean? A Large-Scale Reproducibility Study of Scoring Variants. Chris Kamphuis, Arjen de Vries, Leonid Boytsov and Jimmy Lin. In Proceedings of ECIR 2020.
