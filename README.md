@@ -29,6 +29,12 @@ We provide variants of BM25 that are aligned with those in the Anserini platform
  - collection statistics (number of tokens/average document length) are calculated using the document lengths file; we do not consider the collection statistics in the header.
  - we use a shaded version of protobuf 3, as Terrier depends on Hadoop, which includes protobuf 2.5
 
+## Demonstration
+
+We have a notebook demonstrating using terrier-ciff for ingesting a CIFF index into Terrier. It also creates a CIFF file from a Terrier index. This is a [PyTerrier] notebook. It can be run directly using Colab:
+
+ - `trindex_to_ciff.ipynb` : [[Github](https://github.com/terrierteam/terrier-ciff/blob/master/trindex_to_ciff.ipynb)] [[Colab](https://colab.research.google.com/github/terrierteam/terrier-ciff/blob/master/trindex_to_ciff.ipynb)]
+
 ## Credits
 
 Craig Macdonald, University of Glasgow
